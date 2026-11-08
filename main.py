@@ -9,6 +9,10 @@ load_dotenv()
 
 app = FastAPI()
 
+@app.get("/")
+def read_root():
+    return {"status": "AIRA Backend is Running!", "version": "1.0.0"}
+
 # 1. Groq Client
 api_key = os.getenv("GROQ_API_KEY")
 client = Groq(api_key=api_key)
@@ -24,10 +28,31 @@ CHAT_MODELS = [
     "allam-2-7b"
 ]
 
+# 1. Root Endpoint (பிரவுசர் சோதனைகளுக்காக)
+@app.get("/")
+async def root():
+    return {"status": "AIRA Backend is running successfully!"}
+
+# 2. Health Endpoint
+@app.get("/health")
+async def health():
+    return {"status": "healthy"}
+
+import os
+from fastapi import FastAPI, HTTPException, Header, Depends
+from dotenv import load_dotenv
+
+load_dotenv()
+
+AIRA_SECRET_KEY = os.getenv("AIRA_SECRET_KEY", "aira_secure_token_2026_x89q")
+
 @app.post("/chat")
-async def chat_with_aira(request: ChatRequest):
-    print(f"\n[உள்ளீடு] பயனர்: {request.message}")
+async def chat(request: ChatRequest, x_aira_secret_key: str = Header(None)):
+    # Secret Key இல்லையென்றால் அல்லது தவறாக இருந்தால் 401 Unauthorized எரர் வரும்
+    if x_aira_secret_key != AIRA_SECRET_KEY:
+        raise HTTPException(status_code=401, detail="Unauthorized Access to AIRA Backend")
     
+    # ... உங்கள் Groq API அழைப்பு கோடுகள் தொடரும் ...
     # பிரதான மாடல்களை வரிசையாகச் சோதிக்கும் லூப்
     for model_name in CHAT_MODELS:
         try:
